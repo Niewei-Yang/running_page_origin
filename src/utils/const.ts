@@ -1,7 +1,6 @@
 // Constants
 export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 
   // fallback: 如果 env 没设，用一个提示（或留空，但别用作者的）
-  '请在 Vercel Environment Variables 中设置 VITE_MAPBOX_TOKEN';
 const MUNICIPALITY_CITIES_ARR = [
   '北京市',
   '上海市',
