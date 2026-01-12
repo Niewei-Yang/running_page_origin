@@ -18,6 +18,7 @@ import {
   RUN_TRAIL_COLOR,
   MAP_TILE_STYLES,
   MAP_TILE_STYLE_DARK,
+  IS_CHINESE,
 } from './const';
 import {
   FeatureCollection,
