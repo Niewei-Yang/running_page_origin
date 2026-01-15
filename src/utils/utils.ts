@@ -19,8 +19,6 @@ import {
   MAP_TILE_STYLE_DARK,
   IS_CHINESE,
   getCyclingColor,
-  CYCLING_COLOR_LIGHT,
-  CYCLING_COLOR_DARK,
 } from './const';
 import {
   FeatureCollection,
@@ -235,25 +233,34 @@ const pathForRun = (run: Activity): Coordinate[] => {
 };
 
 const colorForRun = (run: Activity): string => {
+  // 为跑步和骑行分别准备动态颜色变量
   const dynamicRunColor = getRuntimeRunColor();
+  const dynamicCyclingColor = getCyclingColor();
 
   switch (run.type) {
     case 'Run': {
       if (run.subtype === 'trail') {
         return RUN_TRAIL_COLOR;
-      } else if (run.subtype === 'generic') {
-        return dynamicRunColor;
       }
+      // 普通跑步（generic 或其他）统一用动态颜色
       return dynamicRunColor;
     }
-    case 'cycling':
-      return getCyclingColor();
+
+    case 'cycling': {
+      // 目前所有骑行都用动态颜色
+      // 如果以后有特殊 subtype，可以在这里加 if 判断
+      return dynamicCyclingColor;
+    }
+
     case 'hiking':
       return HIKING_COLOR;
+
     case 'walking':
       return WALKING_COLOR;
+
     case 'swimming':
       return SWIMMING_COLOR;
+
     default:
       return MAIN_COLOR;
   }
