@@ -262,7 +262,7 @@ const colorForRun = (run: Activity): string => {
       return SWIMMING_COLOR;
 
     default:
-      return MAIN_COLOR;
+      return SWIMMING_COLOR;
   }
 };
 
