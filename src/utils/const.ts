@@ -189,7 +189,7 @@ export const RUN_COLOR_DARK = MAIN_COLOR;
 
 // 骑行颜色 - 亮色模式用橙色，暗色模式保持原鲜绿
 export const CYCLING_COLOR_LIGHT = '#f97316'; // 橙色（Tailwind orange-600，推荐值）
-export const CYCLING_COLOR_DARK = MAIN_COLOR; // 原颜色（鲜绿）
+export const CYCLING_COLOR_DARK = MAIN_COLOR;
 
 // Single run animation colors
 export const SINGLE_RUN_COLOR_LIGHT = '#52c41a'; // Green for light theme

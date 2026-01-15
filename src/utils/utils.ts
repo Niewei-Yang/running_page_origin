@@ -10,7 +10,6 @@ import {
   RUN_TITLES,
   ACTIVITY_TYPES,
   RICH_TITLE,
-  CYCLING_COLOR,
   HIKING_COLOR,
   WALKING_COLOR,
   SWIMMING_COLOR,
@@ -19,6 +18,7 @@ import {
   MAP_TILE_STYLES,
   MAP_TILE_STYLE_DARK,
   IS_CHINESE,
+  getCyclingColor,
 } from './const';
 import {
   FeatureCollection,
@@ -245,7 +245,7 @@ const colorForRun = (run: Activity): string => {
       return dynamicRunColor;
     }
     case 'cycling':
-      return CYCLING_COLOR;
+      return getCyclingColor();
     case 'hiking':
       return HIKING_COLOR;
     case 'walking':
