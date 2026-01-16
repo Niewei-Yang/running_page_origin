@@ -263,11 +263,13 @@ const colorForRun = (run: Activity): string => {
       return HIKING_COLOR;
 
     case 'walking':
-    case 'Walk':
+    case 'Walk': // For Strava
+
       return WALKING_COLOR;
 
     case 'swimming':
-    case 'Swim':
+    case 'Swim': // For Strava
+
       return SWIMMING_COLOR;
 
     default:
