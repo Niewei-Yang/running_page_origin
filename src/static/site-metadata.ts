@@ -25,6 +25,10 @@ const data: ISiteMetadataResult = {
       url: `${getBasePath()}/summary`,
     },
     {
+      name: 'WeihangのPage',
+      url: 'https://running-page-weihang.vercel.app/',
+    },
+    {
       name: 'Blog',
       url: 'https://github.com/yihong0618/gitblog',
     },
