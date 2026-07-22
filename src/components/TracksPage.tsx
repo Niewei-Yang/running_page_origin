@@ -9,6 +9,7 @@ import {
   formatDistance,
   parseMovingTime,
   formatPace,
+  formatSpeed,
 } from '../hooks/useActivities';
 import { useLocale } from '../hooks/useLocale';
 import { MAPBOX_TOKEN } from '../config';
@@ -17,6 +18,7 @@ import {
   getActivityRouteColor,
   isDisplayOnlyTransportActivity,
   isTransportActivity,
+  shouldDisplayActivitySpeed,
 } from '../core/activityTypes';
 
 type SportType = 'Run';
@@ -565,13 +567,25 @@ export function TracksPage({
                 {selectedActivity.average_speed > 0 && (
                   <div>
                     <p className="text-[9px] tracking-wider text-[var(--color-muted)] uppercase">
-                      {locale === 'zh' ? '配速' : 'Pace'}
+                      {shouldDisplayActivitySpeed(selectedActivity.type)
+                        ? locale === 'zh'
+                          ? '速度'
+                          : 'Speed'
+                        : locale === 'zh'
+                          ? '配速'
+                          : 'Pace'}
                     </p>
                     <p className="font-mono text-base leading-tight font-bold">
-                      {formatPace(selectedActivity.average_speed)}{' '}
-                      <span className="text-[10px] font-normal text-[var(--color-muted)]">
-                        /km
-                      </span>
+                      {shouldDisplayActivitySpeed(selectedActivity.type) ? (
+                        formatSpeed(selectedActivity.average_speed)
+                      ) : (
+                        <>
+                          {formatPace(selectedActivity.average_speed)}{' '}
+                          <span className="text-[10px] font-normal text-[var(--color-muted)]">
+                            /km
+                          </span>
+                        </>
+                      )}
                     </p>
                   </div>
                 )}

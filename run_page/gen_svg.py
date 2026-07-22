@@ -251,9 +251,7 @@ def main():
 
     excluded_track_types = STATS_EXCLUDED_TRACK_TYPES.get(args.type, set())
     if excluded_track_types:
-        tracks = [
-            track for track in tracks if track.type not in excluded_track_types
-        ]
+        tracks = [track for track in tracks if track.type not in excluded_track_types]
 
     if not tracks:
         return

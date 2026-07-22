@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
 import type { Activity, SportFilter } from '../types';
-import { formatDuration, formatPace } from '../hooks/useActivities';
+import {
+  formatDuration,
+  formatPace,
+  formatSpeed,
+} from '../hooks/useActivities';
 import { useLocale } from '../hooks/useLocale';
+import { shouldDisplayActivitySpeed } from '../core/activityTypes';
 
 interface ActivityLogProps {
   activities: Activity[];
@@ -23,6 +28,9 @@ function typeIcon(type: string): string {
     Ride: '🚴',
     Hike: '🥾',
     Walk: '🚶',
+    Workout: '🏋️',
+    WeightTraining: '🏋️',
+    Training: '🏋️',
     RoadTrip: '🚗',
     Flight: '✈️',
     Train: '🚆',
@@ -39,7 +47,7 @@ export function ActivityLog({
   onSelectActivity,
   filter = 'all',
 }: ActivityLogProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [page, setPage] = useState(0);
   const [distFilter, setDistFilter] = useState<DistanceFilter>('all');
 
@@ -149,7 +157,9 @@ export function ActivityLog({
               <th className="pb-3 font-medium">{t('name')}</th>
               <th className="pb-3 font-medium">{t('distance')}</th>
               <th className="pb-3 font-medium">{t('duration')}</th>
-              <th className="pb-3 font-medium">{t('pace')}</th>
+              <th className="pb-3 font-medium">
+                {locale === 'zh' ? '配速 / 速度' : 'Pace / Speed'}
+              </th>
               <th className="pb-3 font-medium">{t('hr')}</th>
             </tr>
           </thead>
@@ -187,7 +197,9 @@ export function ActivityLog({
                   {formatDuration(a.moving_time)}
                 </td>
                 <td className="py-3 text-[var(--color-muted)]">
-                  {formatPace(a.average_speed)}
+                  {shouldDisplayActivitySpeed(a.type)
+                    ? formatSpeed(a.average_speed)
+                    : formatPace(a.average_speed)}
                 </td>
                 <td className="py-3 text-[var(--color-muted)]">
                   {a.average_heartrate ? Math.round(a.average_heartrate) : '--'}

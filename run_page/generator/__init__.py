@@ -7,7 +7,7 @@ import arrow
 import polyline as polyline_codec
 import stravalib
 from gpxtrackposter import track_loader
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from polyline_processor import filter_out
 from synced_data_file_logger import save_synced_data_file_list
@@ -20,6 +20,20 @@ IGNORE_BEFORE_SAVING = os.getenv("IGNORE_BEFORE_SAVING", False)
 # Bounding box spread threshold (degrees) for indoor activity detection.
 # 0.002° ≈ 220m — treadmill GPS drift typically stays within this range.
 INDOOR_SPREAD_THRESHOLD = float(os.getenv("INDOOR_SPREAD_THRESHOLD", "0.002"))
+
+# Stationary exercise records legitimately have no distance. Keep them in the
+# activity feed and time/count statistics instead of dropping them as empty GPS
+# tracks. "Train" is rail transport and is deliberately not part of this set.
+STATIONARY_EXERCISE_TYPES = {
+    "Workout",
+    "WeightTraining",
+    "Crossfit",
+    "Yoga",
+    "Pilates",
+    "Elliptical",
+    "StairStepper",
+    "HighIntensityIntervalTraining",
+}
 
 # Distance (degrees) to decide if a route is a loop (start ≈ end).
 _LOOP_CLOSE_THRESHOLD = 0.003  # ~330m
@@ -234,7 +248,12 @@ class Generator:
 
     def load(self):
         # if sub_type is not in the db, just add an empty string to it
-        query = self.session.query(Activity).filter(Activity.distance > 0.1)
+        query = self.session.query(Activity).filter(
+            or_(
+                Activity.distance > 0.1,
+                Activity.type.in_(STATIONARY_EXERCISE_TYPES),
+            )
+        )
         if self.only_run:
             query = query.filter(Activity.type == "Run")
 
@@ -259,9 +278,14 @@ class Generator:
                 streak = 1
             activity.streak = streak  # type: ignore
             last_date = date
+            activity_dict = activity.to_dict()
             if not IGNORE_BEFORE_SAVING:
-                activity.summary_polyline = filter_out(activity.summary_polyline)  # type: ignore
-            activity_list.append(activity.to_dict())
+                # Filter the serialized copy only. Mutating the ORM object here
+                # causes every JSON regeneration to rewrite all DB polylines.
+                activity_dict["summary_polyline"] = filter_out(
+                    activity.summary_polyline
+                )
+            activity_list.append(activity_dict)
 
         activity_list = self._fix_indoor_locations(activity_list)
 

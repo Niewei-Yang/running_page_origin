@@ -3,6 +3,17 @@ const normalizeActivityType = (type: string): string =>
 
 const TRANSPORT_ACTIVITY_TYPES = new Set(['roadtrip', 'flight', 'train']);
 const DISPLAY_ONLY_TRANSPORT_TYPES = new Set(['flight', 'train']);
+const SPEED_DISPLAY_ACTIVITY_TYPES = new Set([
+  'ride',
+  'indoorride',
+  'virtualride',
+  'ebikeride',
+  'mountainbikeride',
+  'gravelride',
+  'roadtrip',
+  'flight',
+  'train',
+]);
 
 export const ACTIVITY_ROUTE_COLORS = {
   Run: '#f97316',
@@ -14,7 +25,13 @@ export const ACTIVITY_ROUTE_COLORS = {
 } as const;
 
 export function isTransportActivity(type: string): boolean {
+  // Exact normalized match: "Train" (rail transport) is excluded, while
+  // "Training", "WeightTraining" and "Workout" remain statistical activities.
   return TRANSPORT_ACTIVITY_TYPES.has(normalizeActivityType(type));
+}
+
+export function shouldDisplayActivitySpeed(type: string): boolean {
+  return SPEED_DISPLAY_ACTIVITY_TYPES.has(normalizeActivityType(type));
 }
 
 // Matches the established Neewii_Worksout map treatment: flights and trains
