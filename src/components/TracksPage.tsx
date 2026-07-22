@@ -12,6 +12,12 @@ import {
 } from '../hooks/useActivities';
 import { useLocale } from '../hooks/useLocale';
 import { MAPBOX_TOKEN } from '../config';
+import {
+  ACTIVITY_ROUTE_COLORS,
+  getActivityRouteColor,
+  isDisplayOnlyTransportActivity,
+  isTransportActivity,
+} from '../core/activityTypes';
 
 type SportType = 'Run';
 
@@ -65,6 +71,7 @@ function TrackThumb({
     ? renderTrackSVG(activity.summary_polyline, size)
     : '';
   if (!points) return null;
+  const displayOnly = isDisplayOnlyTransportActivity(activity.type);
   return (
     <div
       className={`group relative cursor-pointer rounded transition-all ${selected ? 'ring-2 ring-[var(--color-accent)] ring-offset-1 ring-offset-[var(--color-bg)]' : ''}`}
@@ -82,6 +89,8 @@ function TrackThumb({
           fill="none"
           stroke={color}
           strokeWidth={selected ? '2' : '1.5'}
+          strokeDasharray={displayOnly ? '4 4' : undefined}
+          opacity={displayOnly && !selected ? 0.55 : 1}
           strokeLinecap="round"
           strokeLinejoin="round"
         />
@@ -124,7 +133,7 @@ function TrackMap({
     if (!m || !mapReady.current) return;
     const act = activityRef.current;
     const acts = activitiesRef.current;
-    ['selected', 'all-routes'].forEach((id) => {
+    ['selected', 'display-only-routes', 'all-routes'].forEach((id) => {
       if (m.getLayer(id)) m.removeLayer(id);
       if (m.getSource(id)) m.removeSource(id);
     });
@@ -140,6 +149,7 @@ function TrackMap({
           geometry: { type: 'LineString', coordinates: coords },
         },
       });
+      const displayOnly = isDisplayOnlyTransportActivity(act.type);
       m.addLayer({
         id: 'selected',
         type: 'line',
@@ -147,7 +157,8 @@ function TrackMap({
         paint: {
           'line-color': getColor(act),
           'line-width': 3,
-          'line-opacity': 0.9,
+          'line-opacity': displayOnly ? 0.65 : 0.9,
+          'line-dasharray': displayOnly ? [2, 2] : [1, 0],
         },
       });
       const bounds = new mapboxgl.LngLatBounds();
@@ -176,20 +187,45 @@ function TrackMap({
       id: 'all-routes',
       type: 'line',
       source: 'all-routes',
+      filter: [
+        'all',
+        ['!=', ['get', 'type'], 'Flight'],
+        ['!=', ['get', 'type'], 'Train'],
+      ],
       paint: {
         'line-color': [
           'match',
           ['get', 'type'],
           'Run',
-          '#f97316',
+          ACTIVITY_ROUTE_COLORS.Run,
           'Ride',
-          '#3b82f6',
+          ACTIVITY_ROUTE_COLORS.Ride,
           'Hike',
-          '#22c55e',
+          ACTIVITY_ROUTE_COLORS.Hike,
+          'RoadTrip',
+          ACTIVITY_ROUTE_COLORS.RoadTrip,
           '#a855f7',
         ],
         'line-width': 1.2,
         'line-opacity': 0.5,
+      },
+    });
+    m.addLayer({
+      id: 'display-only-routes',
+      type: 'line',
+      source: 'all-routes',
+      filter: ['in', ['get', 'type'], ['literal', ['Flight', 'Train']]],
+      paint: {
+        'line-color': [
+          'match',
+          ['get', 'type'],
+          'Flight',
+          ACTIVITY_ROUTE_COLORS.Flight,
+          ACTIVITY_ROUTE_COLORS.Train,
+        ],
+        'line-width': 1.2,
+        'line-dasharray': [2, 2],
+        'line-opacity': 0.45,
       },
     });
     const allCoords = features.flatMap(
@@ -248,7 +284,7 @@ function getColor(a: Activity): string {
     const km = a.distance / 1000;
     return km >= 40 ? '#ef4444' : km >= 20 ? '#f97316' : '#f97316';
   }
-  return '#a855f7';
+  return getActivityRouteColor(a.type);
 }
 
 export function TracksPage({
@@ -296,13 +332,16 @@ export function TracksPage({
     (a) => a.summary_polyline && a.summary_polyline.length > 20
   );
 
-  // Stats for left panel
-  const totalDist = base.reduce((s, a) => s + a.distance, 0);
-  const totalTime = base.reduce(
+  // Transport routes remain visible, but never contribute to sport totals.
+  const statisticalBase = base.filter((a) => !isTransportActivity(a.type));
+  const totalDist = statisticalBase.reduce((s, a) => s + a.distance, 0);
+  const totalTime = statisticalBase.reduce(
     (s, a) => s + parseMovingTime(a.moving_time),
     0
   );
-  const runs = base.filter((a) => a.type === 'Run' && a.average_speed > 0);
+  const runs = statisticalBase.filter(
+    (a) => a.type === 'Run' && a.average_speed > 0
+  );
   const avgPace =
     runs.length > 0
       ? runs.reduce((s, a) => s + a.average_speed, 0) / runs.length
@@ -425,7 +464,7 @@ export function TracksPage({
                   {locale === 'zh' ? '活动' : 'Activities'}
                 </p>
                 <p className="font-mono text-2xl font-bold text-[var(--color-accent)]">
-                  {base.length}
+                  {statisticalBase.length}
                 </p>
               </div>
               <div>

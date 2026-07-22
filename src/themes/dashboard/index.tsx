@@ -18,11 +18,16 @@ import { ProfileCard } from '@/components/ProfileCard';
 import { PersonalBest } from '@/components/PersonalBest';
 import { TracksPage } from '@/components/TracksPage';
 import { ChinaMap } from '@/components/ChinaMap';
+import { isTransportActivity } from '@/core/activityTypes';
 
 type Page = 'home' | 'tracks';
 
 function Dashboard() {
   const activities = getActivityData() as Activity[];
+  const statisticalActivities = useMemo(
+    () => activities.filter((a) => !isTransportActivity(a.type)),
+    [activities]
+  );
   const { dark, toggle } = useTheme();
   const [filter] = useState('all' as const);
   const [year, setYear] = useState<number | null>(null);
@@ -33,8 +38,14 @@ function Dashboard() {
   const [page, setPage] = useState<Page>('home');
 
   const years = getAvailableYears(activities);
+  const statisticalYears = getAvailableYears(statisticalActivities);
   const filtered = useFilteredActivities(activities, filter, year);
-  const heatmapYear = year ?? years[0] ?? new Date().getFullYear();
+  const statisticalFiltered = useFilteredActivities(
+    statisticalActivities,
+    filter,
+    year
+  );
+  const heatmapYear = year ?? statisticalYears[0] ?? new Date().getFullYear();
 
   // Activities filtered to the selected province (for RouteMap)
   const provinceFiltered = useMemo(() => {
@@ -67,14 +78,14 @@ function Dashboard() {
             {/* Left column */}
             <div className="min-w-0 space-y-6 overflow-hidden">
               <StatsCards
-                activities={filtered}
-                allActivities={activities}
+                activities={statisticalFiltered}
+                allActivities={statisticalActivities}
                 year={year}
                 filter={filter}
                 onSelectActivity={setSelectedActivity}
               />
               <ContributionHeatmap
-                activities={filtered}
+                activities={statisticalFiltered}
                 year={heatmapYear}
                 filter={filter}
                 onSelectActivity={setSelectedActivity}
@@ -92,9 +103,9 @@ function Dashboard() {
 
             {/* Right column */}
             <div className="flex min-w-0 flex-col gap-6 overflow-hidden">
-              <ProfileCard activities={activities} filter={filter} />
+              <ProfileCard activities={statisticalActivities} filter={filter} />
               <ChinaMap
-                activities={filtered}
+                activities={statisticalFiltered}
                 filter={filter}
                 selectedProvince={selectedProvince}
                 onSelectProvince={(p) => {
@@ -109,11 +120,11 @@ function Dashboard() {
                 onClearSelection={() => setSelectedActivity(null)}
               />
               <PersonalBest
-                activities={activities}
+                activities={statisticalActivities}
                 onSelectActivity={setSelectedActivity}
               />
               <CalendarWidget
-                activities={filtered}
+                activities={statisticalFiltered}
                 onSelectActivity={setSelectedActivity}
               />
             </div>

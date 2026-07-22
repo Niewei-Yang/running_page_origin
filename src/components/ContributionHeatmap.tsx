@@ -251,7 +251,9 @@ export function ContributionHeatmap({
         )
         .map((a) => toDisplayType(a.type))
     );
-    return (['Run', 'Training'] as const).filter((t) => types.has(t));
+    return (['Run', 'Ride', 'Hike', 'Training'] as const).filter((t) =>
+      types.has(t)
+    );
   }, [activities, selectedYear, isAll]);
 
   // Gym: monthly session breakdown

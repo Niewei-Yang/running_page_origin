@@ -4,6 +4,11 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import * as polyline from '@mapbox/polyline';
 import type { Activity } from '../types';
 import { MAPBOX_TOKEN } from '../config';
+import {
+  ACTIVITY_ROUTE_COLORS,
+  getActivityRouteColor,
+  isDisplayOnlyTransportActivity,
+} from '../core/activityTypes';
 
 interface RouteMapProps {
   activities: Activity[];
@@ -31,6 +36,8 @@ export function RouteMap({
     if (!map.current) return;
 
     // Remove existing source/layer
+    if (map.current.getLayer('display-only-routes'))
+      map.current.removeLayer('display-only-routes');
     if (map.current.getLayer('routes')) map.current.removeLayer('routes');
     if (map.current.getSource('routes')) map.current.removeSource('routes');
     if (map.current.getLayer('selected')) map.current.removeLayer('selected');
@@ -51,14 +58,16 @@ export function RouteMap({
         },
       });
 
+      const displayOnly = isDisplayOnlyTransportActivity(selectedActivity.type);
       map.current.addLayer({
         id: 'selected',
         type: 'line',
         source: 'selected',
         paint: {
-          'line-color': selectedActivity.type === 'Run' ? '#f97316' : '#3b82f6',
+          'line-color': getActivityRouteColor(selectedActivity.type),
           'line-width': 3,
-          'line-opacity': 0.9,
+          'line-opacity': displayOnly ? 0.65 : 0.9,
+          'line-dasharray': displayOnly ? [2, 2] : [1, 0],
         },
       });
 
@@ -99,6 +108,11 @@ export function RouteMap({
       id: 'routes',
       type: 'line',
       source: 'routes',
+      filter: [
+        'all',
+        ['!=', ['get', 'type'], 'Flight'],
+        ['!=', ['get', 'type'], 'Train'],
+      ],
       paint: {
         'line-color': [
           'match',
@@ -106,11 +120,34 @@ export function RouteMap({
           'Run',
           '#f97316',
           'Ride',
-          '#3b82f6',
+          ACTIVITY_ROUTE_COLORS.Ride,
+          'Hike',
+          ACTIVITY_ROUTE_COLORS.Hike,
+          'RoadTrip',
+          ACTIVITY_ROUTE_COLORS.RoadTrip,
           '#a855f7',
         ],
         'line-width': 1.5,
         'line-opacity': 0.6,
+      },
+    });
+
+    map.current.addLayer({
+      id: 'display-only-routes',
+      type: 'line',
+      source: 'routes',
+      filter: ['in', ['get', 'type'], ['literal', ['Flight', 'Train']]],
+      paint: {
+        'line-color': [
+          'match',
+          ['get', 'type'],
+          'Flight',
+          ACTIVITY_ROUTE_COLORS.Flight,
+          ACTIVITY_ROUTE_COLORS.Train,
+        ],
+        'line-width': 1.5,
+        'line-dasharray': [2, 2],
+        'line-opacity': 0.45,
       },
     });
 
